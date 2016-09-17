@@ -1,0 +1,22 @@
+[main]
+logdir=/var/log/puppet
+vardir=/var/lib/puppet
+ssldir=$vardir/ssl
+rundir=/var/run/puppet
+factpath=$vardir/lib/facter
+
+environment = 
+
+# Add Jitter
+splay = true
+splaylimit = 60s
+
+# dont spawn a daemon
+onetime = true
+daemonize = false
+
+[agent]
+classfile = $vardir/classes.txt
+localconfig = $vardir/localconfig
+#report = false
+
