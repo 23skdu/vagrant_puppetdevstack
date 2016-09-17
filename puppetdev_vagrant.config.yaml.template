@@ -1,0 +1,4 @@
+puppetmaster:
+     hostname: 'puppetmaster001.owlsnest'
+puppetclient:
+     hostname: 'puppetclient001.owlsnest'
