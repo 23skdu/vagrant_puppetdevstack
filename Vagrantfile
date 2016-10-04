@@ -3,7 +3,7 @@ puppetdev = YAML::load_file("puppetdev_vagrant.config.yaml")
 Vagrant.configure(2) do |config|
  config.vm.define "puppetmaster" do |puppetmaster|
   puppetmaster.vm.provider :virtualbox do |c|
-   c.memory = 2048 
+   c.memory = 1024 
    c.cpus = 2
    c.gui = true
    c.name = puppetdev['puppetmaster']['hostname'] 
@@ -11,7 +11,7 @@ Vagrant.configure(2) do |config|
   puppetmaster.vm.box = "debian/jessie64"
   puppetmaster.vm.hostname = puppetdev['puppetmaster']['hostname']
   puppetmaster.vm.network :private_network, ip: "10.0.3.42",
-   virtualbox__intnet: "puppetdevnetwork"  
+   virtualbox__intnet: "devnetwork"  
   puppetmaster.ssh.username = 'vagrant'
   puppetmaster.ssh.password = 'vagrant'
   puppetmaster.vm.provision "file", source: "puppetdev_deploykey", destination: "/tmp/id_rsa"
@@ -27,11 +27,14 @@ Vagrant.configure(2) do |config|
    sudo chmod 600 /root/.ssh/id_rsa
    sudo chmod 644 /root/.ssh/id_rsa.pub
    sudo apt-get update
-   sudo apt-get install -y --fix-missing net-tools git activemq emacs-nox postgresql mcollective postgresql-contrib ntp ntpdate puppetmaster-passenger augeas-doc mcollective-common augeas-tools ruby-rrd librrd-ruby puppet-el ruby-ldap ruby-stomp stompserver vim-puppet ruby-builder-doc rails ruby-passenger-doc debian-keyring g++-multilib g++-4.9-multilib libstdc++6-4.9-dbg libgmp10-doc libmpfr-dev libstdc++-4.8-doc mcollective-doc doc-base ruby-compass iptables treetop tree gdb strace tcpdump dkms
+   sudo apt-get install -y --fix-missing net-tools git postgresql postgresql-contrib ntp ntpdate puppetmaster-passenger augeas-doc mcollective-common augeas-tools ruby-rrd librrd-ruby puppet-el ruby-ldap ruby-stomp stompserver vim-puppet ruby-builder-doc rails ruby-passenger-doc debian-keyring g++-multilib g++-4.9-multilib libstdc++6-4.9-dbg libgmp10-doc libmpfr-dev libstdc++-4.8-doc mcollective-doc doc-base ruby-compass iptables treetop tree gdb strace tcpdump dkms
    sudo service apache2 stop
    sudo gem install hiera-eyaml 
    sudo puppet agent --enable
    sudo echo "10.0.3.42 puppet" >> /etc/hosts
+   sudo rm -rf /etc/puppet
+   sudo ssh-keyscan -H github.com > ~/.ssh/known_hosts
+   sudo git clone git@github.com:23skdu/puppet.git /etc/puppet 
    sudo cp /tmp/puppet.conf /etc/puppet/puppet.conf
    sudo mkdir /var/lib/puppet/keys
    sudo mv /tmp/*.pem /var/lib/puppet/keys/
@@ -43,7 +46,7 @@ Vagrant.configure(2) do |config|
  end
  config.vm.define "puppetclient" do |puppetclient|
    puppetclient.vm.provider :virtualbox do |c|
-   c.memory = 8192 
+   c.memory = 2048 
    c.cpus = 2
    c.gui = true
    c.name = puppetdev['puppetclient']['hostname'] 
@@ -51,13 +54,13 @@ Vagrant.configure(2) do |config|
    puppetclient.vm.box  = "debian/jessie64"
    puppetclient.vm.hostname  = puppetdev['puppetclient']['hostname']
    puppetclient.vm.network :private_network, ip:  "10.0.3.43",
-     virtualbox__intnet: "puppetdevnetwork"
+     virtualbox__intnet: "devnetwork"
    puppetclient.ssh.username = 'vagrant'
    puppetclient.ssh.password = 'vagrant' 
    puppetclient.vm.provision "file", source: "puppetclient.conf", destination: "/tmp/puppet.conf"
    puppetclient.vm.provision :shell, inline: <<-SHELL
     sudo apt-get update
-    sudo apt-get install -y --fix-missing puppet net-tools emacs-nox 
+    sudo apt-get install -y --fix-missing puppet  
     puppet agent --enable
     echo "10.0.3.42 puppet" >> /etc/hosts
     sudo cp /tmp/puppet.conf /etc/puppet/puppet.conf
