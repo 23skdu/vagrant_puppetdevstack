@@ -1,0 +1,220 @@
+# frozen_string_literal: true
+
+# Puppet development stack - Vagrant definition.
+#
+# Design notes:
+#   * Configuration is parsed with YAML.safe_load_file (no arbitrary objects).
+#   * The base box is pinned by version and, optionally, by SHA-256 checksum.
+#   * SSH is key-only: no passwords, no agent forwarding, no X11 forwarding.
+#   * The default /vagrant synced folder is disabled to reduce host/guest exposure.
+#   * All provisioning lives in versioned scripts under scripts/ so it can be
+#     linted, reviewed and tested; inline heredocs are deliberately avoided.
+#   * Secrets are optional files in an ignored secrets/ directory. Missing
+#     secrets degrade to a warning instead of breaking `vagrant up`.
+#
+# See docs/README.md and docs/ARCHITECTURE.md for the full rationale.
+
+require "ipaddr"
+require "yaml"
+
+VAGRANTFILE_API_VERSION = "2"
+
+STACK_ROOT  = File.expand_path(__dir__)
+CONFIG_PATH = File.expand_path(ENV.fetch("PUPPETDEV_CONFIG", File.join(STACK_ROOT, "config", "default.yaml")))
+SECRETS_DIR = File.expand_path(ENV.fetch("PUPPETDEV_SECRETS", File.join(STACK_ROOT, "secrets")))
+SCRIPTS_DIR = File.join(STACK_ROOT, "scripts")
+
+SECRET_FILES = %w[puppet_control_deploy_key eyaml_private_key eyaml_public_key].freeze
+NODE_NAMES   = %w[puppetserver puppetagent].freeze
+
+HOSTNAME_RE = /\A[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*\z/
+URL_RE      = %r{\A(?:https://[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+|git@[A-Za-z0-9._-]+:[A-Za-z0-9._~:/?-]+)\z}
+NAME_RE     = /\A[A-Za-z0-9_-]{1,32}\z/
+
+def load_stack_config(path)
+  abort "Configuration file not found: #{path}" unless File.file?(path)
+
+  parsed = YAML.safe_load_file(path, aliases: true)
+  abort "Configuration must be a YAML mapping: #{path}" unless parsed.is_a?(Hash)
+
+  parsed
+rescue Psych::Exception => e
+  abort "Invalid YAML in #{path}: #{e.message}"
+end
+
+def required(hash, key, context)
+  abort "Missing required key '#{context}.#{key}'" unless hash.is_a?(Hash) && hash.key?(key)
+
+  value = hash[key]
+  abort "Empty key '#{context}.#{key}'" if value.nil? || value.to_s.strip.empty?
+
+  value
+end
+
+def assert_match!(value, pattern, label)
+  abort "Invalid #{label}: #{value.inspect}" unless value.to_s.match?(pattern)
+end
+
+def node_address(network, octet)
+  number = Integer(octet)
+  abort "network octet must be between 2 and 254: #{octet}" unless (2..254).cover?(number)
+
+  address = network | number
+  abort "octet #{octet} is outside #{network}" unless network.include?(address)
+
+  address
+end
+
+stack       = load_stack_config(CONFIG_PATH)
+box         = required(stack, "box", "root")
+puppet      = required(stack, "puppet", "root")
+network_cfg = required(stack, "network", "root")
+nodes_cfg   = required(stack, "nodes", "root")
+control     = required(puppet, "control_repo", "puppet")
+
+box_name         = required(box, "name", "box").to_s
+box_version      = required(box, "version", "box").to_s
+box_checksum     = box.fetch("checksum", "").to_s.strip
+box_checksum_type = box.fetch("checksum_type", "sha256").to_s
+
+puppet_version = required(puppet, "version", "puppet").to_s
+abort "puppet.version must be one of: 7, 8" unless %w[7 8].include?(puppet_version)
+
+server_hostname = required(puppet, "server_hostname", "puppet").to_s
+assert_match!(server_hostname, HOSTNAME_RE, "puppet.server_hostname")
+
+puppet_env = required(puppet, "environment", "puppet").to_s
+assert_match!(puppet_env, NAME_RE, "puppet.environment")
+
+autosign = required(puppet, "autosign", "puppet").to_s
+abort "puppet.autosign must not contain whitespace" if autosign.match?(/\s/)
+
+control_https    = required(control, "https", "puppet.control_repo").to_s
+control_ssh      = required(control, "ssh", "puppet.control_repo").to_s
+control_branch   = required(control, "branch", "puppet.control_repo").to_s
+assert_match!(control_https, URL_RE, "puppet.control_repo.https")
+assert_match!(control_ssh, URL_RE, "puppet.control_repo.ssh")
+assert_match!(control_branch, NAME_RE, "puppet.control_repo.branch")
+
+begin
+  network = IPAddr.new(required(network_cfg, "subnet", "network").to_s)
+rescue ArgumentError => e
+  abort "Invalid network.subnet: #{e.message}"
+end
+abort "network.subnet must be an IPv4 CIDR range" unless network.ipv4?
+
+internal_network = required(network_cfg, "internal_network", "network").to_s
+assert_match!(internal_network, NAME_RE, "network.internal_network")
+
+gui_override  = ENV.fetch("PUPPETDEV_GUI", "").downcase
+gui           = stack.fetch("gui", false) == true || %w[1 true yes].include?(gui_override)
+boot_timeout  = Integer(stack.fetch("boot_timeout", 300))
+
+# Validate every node before Vagrant starts creating any VM.
+NODE_NAMES.each do |name|
+  settings = required(nodes_cfg, name, "nodes")
+  assert_match!(required(settings, "hostname", "nodes.#{name}").to_s, HOSTNAME_RE, "nodes.#{name}.hostname")
+  node_address(network, required(settings, "ip_octet", "nodes.#{name}"))
+  Integer(required(settings, "memory_mb", "nodes.#{name}"))
+  Integer(required(settings, "cpus", "nodes.#{name}"))
+end
+
+octets = NODE_NAMES.map { |name| Integer(nodes_cfg.fetch(name).fetch("ip_octet")) }
+abort "nodes.*.ip_octet values must be unique" unless octets.uniq.length == octets.length
+
+server_address = node_address(network, nodes_cfg.fetch("puppetserver").fetch("ip_octet")).to_s
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box_check_update = true
+
+  NODE_NAMES.each do |name|
+    settings = nodes_cfg.fetch(name)
+    hostname = settings.fetch("hostname").to_s
+    address  = node_address(network, settings.fetch("ip_octet")).to_s
+
+    config.vm.define name do |node|
+      node.vm.box = box_name
+      node.vm.box_version = box_version
+      unless box_checksum.empty?
+        abort "box.checksum_type must be sha256 or sha512" unless %w[sha256 sha512].include?(box_checksum_type)
+
+        node.vm.box_checksum = "#{box_checksum_type}:#{box_checksum}"
+      end
+      node.vm.hostname = hostname
+      node.vm.boot_timeout = boot_timeout
+
+      # Key-based authentication only; never fall back to a shared password.
+      node.ssh.insert_key = true
+      node.ssh.keys_only = true
+      node.ssh.forward_agent = false
+      node.ssh.forward_x11 = false
+
+      # Provisioners upload their own files; no host workspace on the guest.
+      node.vm.synced_folder ".", "/vagrant", disabled: true
+
+      node.vm.network "private_network",
+                      ip: address,
+                      virtualbox__intnet: internal_network,
+                      libvirt__network_name: internal_network
+
+      node.vm.provider "virtualbox" do |vb|
+        vb.name = hostname
+        vb.memory = Integer(settings.fetch("memory_mb"))
+        vb.cpus = Integer(settings.fetch("cpus"))
+        vb.gui = gui
+        vb.linked_clone = true
+        vb.customize ["modifyvm", :id, "--ioapic", "on"]
+        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      end
+
+      node.vm.provider "libvirt" do |lv|
+        lv.name = hostname
+        lv.memory = Integer(settings.fetch("memory_mb"))
+        lv.cpus = Integer(settings.fetch("cpus"))
+        lv.nested = false
+        lv.volume_cache = "none"
+      end
+
+      env = {
+        "PUPPETDEV_ROLE" => name,
+        "PUPPETDEV_HOSTNAME" => hostname,
+        "PUPPETDEV_IP" => address,
+        "PUPPETDEV_LIB" => "/tmp/puppetdev/lib/common.sh",
+        "PUPPETDEV_SECRETS_DIR" => "/tmp/puppetdev/secrets",
+        "PUPPET_VERSION" => puppet_version,
+        "PUPPET_SERVER_HOSTNAME" => server_hostname,
+        "PUPPET_SERVER_IP" => server_address,
+        "PUPPET_ENVIRONMENT" => puppet_env,
+        "PUPPET_AUTOSIGN" => autosign,
+        "PUPPET_CONTROL_HTTPS" => control_https,
+        "PUPPET_CONTROL_SSH" => control_ssh,
+        "PUPPET_CONTROL_BRANCH" => control_branch,
+        "PUPPET_ENROLL" => %w[1 true yes].include?(ENV.fetch("PUPPET_ENROLL", "false").downcase).to_s
+      }
+
+      # 1. Safe staging directories. 2. Library + optional secrets. 3. Bootstrap.
+      node.vm.provision "shell",
+                        path: File.join(SCRIPTS_DIR, "prepare.sh"),
+                        privileged: true
+
+      node.vm.provision "file",
+                        source: File.join(SCRIPTS_DIR, "lib", "common.sh"),
+                        destination: "/tmp/puppetdev/lib/common.sh"
+
+      SECRET_FILES.each do |secret|
+        source = File.join(SECRETS_DIR, secret)
+        next unless File.file?(source)
+
+        node.vm.provision "file",
+                          source: source,
+                          destination: "/tmp/puppetdev/secrets/#{secret}"
+      end
+
+      script = name == "puppetserver" ? "bootstrap-server.sh" : "bootstrap-agent.sh"
+      node.vm.provision "shell",
+                        path: File.join(SCRIPTS_DIR, script),
+                        privileged: true,
+                        env: env
+    end
+  end
+end

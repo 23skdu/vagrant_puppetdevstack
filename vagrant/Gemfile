@@ -1,0 +1,8 @@
+# frozen_string_literal: true
+
+# Ruby-side tooling for the Vagrant stack. Dependabot's `bundler` ecosystem
+# watches this file, so Vagrant and RuboCop updates arrive as reviewed PRs.
+source "https://rubygems.org"
+
+gem "rubocop", ">= 1.60", "< 2.0"
+gem "vagrant", ">= 2.4", "< 3.0"

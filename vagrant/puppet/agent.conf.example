@@ -1,0 +1,13 @@
+# Reference output generated on the agent by scripts/bootstrap-agent.sh.
+# This file is documentation only - values come from config/default.yaml.
+
+[main]
+    server = puppet.example.test
+    certname = service001.example.test
+    environment = dev
+
+[agent]
+    onetime = true
+    daemonize = false
+    splay = true
+    splaylimit = 60s

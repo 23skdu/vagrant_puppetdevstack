@@ -1,0 +1,44 @@
+---
+# Committed defaults for the Puppet development stack.
+# No secrets belong in this file - see docs/SECURITY.md.
+
+box:
+  # Pinned to a release that still publishes a VirtualBox provider.
+  name: "debian/bookworm64"
+  version: "12.20250126.1"
+  # Optional integrity pin. Fetch and verify the box, then record e.g.
+  # "sha256:<64 hex chars>". Left empty by default because this release does
+  # not publish a checksum in Vagrant Cloud metadata.
+  checksum: ""
+  checksum_type: "sha256"
+
+puppet:
+  version: "8"
+  server_hostname: "puppet.owlsnest"
+  environment: "dev"
+  # Development-only name-based autosigning. Never use a wildcard in production.
+  autosign: "*.owlsnest"
+  control_repo:
+    https: "https://github.com/23skdu/puppet.git"
+    ssh: "git@github.com:23skdu/puppet.git"
+    branch: "main"
+
+network:
+  subnet: "10.0.3.0/24"
+  internal_network: "devnetwork"
+
+nodes:
+  puppetserver:
+    hostname: "puppetmaster001.owlsnest"
+    ip_octet: 42
+    memory_mb: 2048
+    cpus: 2
+  puppetagent:
+    hostname: "service001.owlsnest"
+    ip_octet: 43
+    memory_mb: 1024
+    cpus: 1
+
+# Set to true (or PUPPETDEV_GUI=true) for interactive debugging.
+gui: false
+boot_timeout: 300

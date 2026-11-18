@@ -1,0 +1,18 @@
+# Reference output generated on the server by scripts/bootstrap-server.sh.
+# This file is documentation only - values come from config/default.yaml.
+
+[main]
+    server = puppet.example.test
+    environment = dev
+    environmentpath = /etc/puppetlabs/puppet/environments
+    basemodulepath = /etc/puppetlabs/puppet/modules
+    hiera_config = /etc/puppetlabs/puppet/hiera.yaml
+    dns_alt_names = puppet.example.test,puppetserver001.example.test,puppet
+
+[master]
+    autosign = /etc/puppetlabs/puppet/autosign.conf
+    vardir = /opt/puppetlabs/server/data/puppetserver
+    logdir = /var/log/puppetlabs/puppetserver
+    rundir = /var/run/puppetlabs/puppetserver
+    pidfile = /var/run/puppetlabs/puppetserver/puppetserver.pid
+    codename = dev
