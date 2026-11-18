@@ -5,7 +5,6 @@ Vagrant: one Puppet Server (`puppetserver`) and one Puppet agent (`puppetagent`)
 on a private internal network.
 
 - [Architecture and modernization decisions](ARCHITECTURE.md)
-- [Security posture and secret handling](SECURITY.md)
 - [Repository layout](#repository-layout)
 - [Prerequisites](#prerequisites)
 - [Quick start](#quick-start)
@@ -155,8 +154,9 @@ If no deploy key is present, the control repo is cloned over HTTPS. If no
 eyaml keys are present, hiera simply has no encrypted backend configured.
 Missing secrets never break `vagrant up`.
 
-See [SECURITY.md](SECURITY.md) for the historical exposure in this repository's
-git history and the required key rotation steps.
+Never commit these files: `vagrant/secrets/` is ignored by git, and the
+`security-secrets` Make target scans both the worktree and history.
+
 
 ## Make targets
 

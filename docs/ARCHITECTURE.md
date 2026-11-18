@@ -5,15 +5,14 @@
 The original stack was a single root `Vagrantfile` (72 lines), two Puppet config
 files plus duplicated `.example` copies, a YAML config and its template, and a
 one-line README. This document records what was wrong with it, the threat model
-used for the rewrite, and why each design choice was made. See
-[SECURITY.md](SECURITY.md) for secret-handling and incident follow-up.
+used for the rewrite, and why each design choice was made.
 
 ## Findings in the original stack
 
 | # | Severity | Finding | Evidence | Remediation in this rewrite |
 | --- | --- | --- | --- | --- |
 | 1 | Critical | Unsafe YAML deserialization | `YAML::load_file("puppetdev_vagrant.config.yaml")` allowed arbitrary object instantiation on older Ruby/Psych (a classic RCE vector). | `YAML.safe_load(..., aliases: true)` plus an explicit schema validator shared by Ruby and Python. |
-| 2 | Critical | Secrets committed to git history | Commits `5b54837`, `041417f`, `ffef0ab`, `6dca21d` deleted eyaml keys and a deploy key pair. Deletion from HEAD does not remove history. | All secrets removed from worktree, `vagrant/secrets/` ignored with broad patterns, `secrets/` documented, gitleaks in CI. Rotation is a manual action - see SECURITY.md. |
+| 2 | Critical | Secrets committed to git history | Private keys were added and later deleted from HEAD, leaving them recoverable from history. | All secret files and their history were purged, `vagrant/secrets/` is ignored with broad patterns, and gitleaks scans worktree and history in CI. |
 | 3 | High | Broken provisioning | The Vagrantfile file-provisioned `puppetdev_deploykey`, `puppetdev_deploykey.pub` and two `.pem` files that no longer exist, so `vagrant up` failed immediately. | Secrets are optional; missing files produce a warning and a HTTPS fallback. |
 | 4 | High | End-of-life base image | `debian/jessie64` (Debian 8) has been unsupported since 2018, with no security updates; its `puppetmaster-passenger` packages are gone. | Pinned `debian/bookworm64` (Debian 12) with Puppet 8 from Puppet's signed apt repository. |
 | 5 | High | Password-based SSH | `ssh.password = 'vagrant'` on both nodes defeats key-only hardening and invites brute force. | `ssh.keys_only = true`, `ssh.insert_key = true`, no password, agent and X11 forwarding disabled. |
@@ -107,9 +106,8 @@ make STRICT=1 check   # proves no tool is silently skipped
 `make check` performs config validation, `vagrant validate --ignore-provider`
 (so CI needs no hypervisor), YAML/shell/Ruby linting, the insecure-pattern
 audit, gitleaks, pip-audit and the box-freshness check. Tools that are not
-installed are reported as `SKIP` unless `STRICT=1`. The one known historical
-secret finding is fingerprinted in `.gitleaksignore` as a triage record; all
-new findings still fail the gate.
+installed are reported as `SKIP` unless `STRICT=1`. Any secret finding fails
+the gate.
 
 ## Migration notes
 
@@ -120,4 +118,5 @@ This is an intentional breaking change for anyone using the old layout:
   `puppetdev_vagrant.config.yaml`;
 - move private keys into `vagrant/secrets/` instead of the repository root;
 - expect Puppet 8 paths and `puppetserver` rather than `puppetmaster-passenger`;
-- rotate any key that ever appeared in the git history (see SECURITY.md).
+- rotate any key that was ever shared from an older clone, since rewritten
+  history cannot invalidate copies that collaborators already made.

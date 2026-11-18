@@ -1,5 +1,0 @@
-# Known historical exposure, retained here so gitleaks keeps scanning history
-# while this single legacy commit is triaged. The key MUST be rotated and the
-# history purged (see docs/SECURITY.md); remove this line once that is done.
-# Any NEW leak will still fail the CI gate.
-0cd1194cca3faff960684e99e24d006f773ea455:puppetdev_deploykey:private-key:1

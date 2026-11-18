@@ -47,8 +47,6 @@ Makefile       validation, lint (including YAML), security and lifecycle targets
   secrets, Make targets and troubleshooting.
 - [Architecture and modernization decisions](docs/ARCHITECTURE.md) - deep
   analysis of the original stack, threat model and design rationale.
-- [Security posture](docs/SECURITY.md) - controls, secret workflow and the
-  key-rotation follow-up required for material previously committed to git.
 
 ## Dependency maintenance
 
@@ -58,9 +56,8 @@ Makefile       validation, lint (including YAML), security and lifecycle targets
   VirtualBox-capable box is available.
 - Every update is validated by `make STRICT=1 check` in CI.
 
-## Security note
+## Security
 
-Private keys that were once committed to this repository's git history were
-deleted from HEAD but remain recoverable from history. The new setup prevents
-reintroduction and stops depending on those files, but the keys must still be
-**rotated**. See [docs/SECURITY.md](docs/SECURITY.md#historical-exposure---action-required).
+No private keys are stored in this repository. Secrets are optional files under
+`vagrant/secrets/` (ignored by git), and `make security` scans the worktree and
+history for anything sensitive. See [docs/README.md](docs/README.md#secrets).

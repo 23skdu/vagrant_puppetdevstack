@@ -6,7 +6,7 @@
 vagrant/.generated/
 
 # ---------------------------------------------------------------------------
-# Secrets - NEVER commit these. See docs/SECURITY.md before adding anything.
+# Secrets - NEVER commit these. See docs/README.md#secrets for the workflow.
 # ---------------------------------------------------------------------------
 secrets/
 vagrant/secrets/
@@ -53,8 +53,6 @@ gitleaks-report.json
 gitleaks-report.sarif
 *.sarif
 *.junit.xml
-# .gitleaksignore is deliberately committed: it documents the one triaged
-# historical finding while gitleaks continues to scan all future history.
 
 # ---------------------------------------------------------------------------
 # Editor, OS and logs

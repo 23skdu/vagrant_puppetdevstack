@@ -1,6 +1,6 @@
 ---
 # Committed defaults for the Puppet development stack.
-# No secrets belong in this file - see docs/SECURITY.md.
+# No secrets belong in this file - see docs/README.md#secrets.
 
 box:
   # Pinned to a release that still publishes a VirtualBox provider.
