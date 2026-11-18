@@ -4,7 +4,7 @@ This repository provisions a small, reproducible Puppet development stack with
 Vagrant: one Puppet Server (`puppetserver`) and one Puppet agent (`puppetagent`)
 on a private internal network.
 
-- [Architecture and modernization decisions](ARCHITECTURE.md)
+- [Architecture](architecture.md)
 - [Repository layout](#repository-layout)
 - [Prerequisites](#prerequisites)
 - [Quick start](#quick-start)
@@ -24,7 +24,6 @@ on a private internal network.
 ├── .github/
 │   ├── dependabot.yml           # Ruby, Python and Actions dependency updates
 │   └── workflows/
-│       ├── ci.yml               # STRICT=1 make check on every push/PR
 │       └── box-update.yml       # Vagrant Cloud box pin updates via PR
 ├── docs/                        # this documentation
 ├── scripts/                     # repository-level validation/security tooling
@@ -68,8 +67,8 @@ sudo apt-get install -y shellcheck          # or brew install shellcheck
 cd vagrant && bundle install                # rubocop + vagrant gems
 ```
 
-Missing tools are reported as `SKIP` by default. Set `STRICT=1` (as CI does)
-to make any missing tool a hard failure.
+Missing tools are reported as `SKIP` by default. Set `STRICT=1` to make any
+missing tool a hard failure.
 
 ## Quick start
 
@@ -190,7 +189,7 @@ Three automated paths cover all dependency classes:
    `box-update.yml` workflow queries Vagrant Cloud weekly and opens a PR only
    when a newer release still publishes a VirtualBox provider.
 
-Every Dependabot or box-update PR runs `make STRICT=1 check` before merge.
+Review every Dependabot or box-update PR with `make STRICT=1 check` before merging.
 
 ## Troubleshooting
 

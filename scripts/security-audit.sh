@@ -86,6 +86,17 @@ else
   fail 'Vagrantfile does not pin box_version'
 fi
 
+# Vagrant has no `vm.box_checksum` setting; the valid keys are
+# `box_download_checksum` and `box_download_checksum_type`. Guard against the
+# invalid key so a checksum pin can never be silently ignored.
+if grep -qE '\.box_checksum[[:space:]]*=' vagrant/Vagrantfile; then
+  fail 'Vagrantfile uses invalid vm.box_checksum (use box_download_checksum)'
+elif grep -qF 'box_download_checksum' vagrant/Vagrantfile; then
+  pass 'Vagrantfile uses valid box_download_checksum settings'
+else
+  fail 'Vagrantfile does not configure box_download_checksum'
+fi
+
 if grep -qE '(^|[^0-9.])(10|172|192)\.[0-9]+\.[0-9]+\.[0-9]+' vagrant/Vagrantfile; then
   fail 'Vagrantfile contains a hardcoded private IPv4 address'
 else

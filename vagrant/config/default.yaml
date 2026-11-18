@@ -6,9 +6,9 @@ box:
   # Pinned to a release that still publishes a VirtualBox provider.
   name: "debian/bookworm64"
   version: "12.20250126.1"
-  # Optional integrity pin. Fetch and verify the box, then record e.g.
-  # "sha256:<64 hex chars>". Left empty by default because this release does
-  # not publish a checksum in Vagrant Cloud metadata.
+  # Optional integrity pin: a bare hex digest (64 chars for sha256, 128 for
+  # sha512). The algorithm is selected by checksum_type. Left empty because
+  # this release does not publish a checksum in Vagrant Cloud metadata.
   checksum: ""
   checksum_type: "sha256"
 

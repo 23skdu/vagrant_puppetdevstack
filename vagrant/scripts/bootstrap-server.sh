@@ -8,6 +8,9 @@ PUPPETDEV_LIB="${PUPPETDEV_LIB:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/li
 # shellcheck disable=SC1090
 source "$PUPPETDEV_LIB"
 
+# Remove staged secrets even if provisioning fails partway through.
+trap 'rm -rf "${PUPPETDEV_SECRETS_DIR:-/tmp/puppetdev/secrets}"' EXIT
+
 require_env PUPPETDEV_HOSTNAME
 require_env PUPPETDEV_IP
 require_env PUPPET_VERSION
@@ -40,7 +43,7 @@ apt_refresh
 apt_install puppetserver
 
 confdir=/etc/puppetlabs/puppet
-# The control repo clone creates environments/production itself.
+# The control repo clone creates the named environment directory itself.
 install -d -m 0755 \
   "${confdir}/environments" \
   "${confdir}/eyaml"
@@ -59,7 +62,6 @@ write_if_changed "${confdir}/puppet.conf" "[main]
     logdir = /var/log/puppetlabs/puppetserver
     rundir = /var/run/puppetlabs/puppetserver
     pidfile = /var/run/puppetlabs/puppetserver/puppetserver.pid
-    codename = ${PUPPET_ENVIRONMENT}
 " 0644
 
 write_if_changed "${confdir}/autosign.conf" "$PUPPET_AUTOSIGN" 0640
@@ -94,9 +96,10 @@ else
   repo="$PUPPET_CONTROL_HTTPS"
 fi
 
-if [[ ! -d "${confdir}/environments/production/.git" ]]; then
+environment_dir="${confdir}/environments/${PUPPET_ENVIRONMENT}"
+if [[ ! -d "${environment_dir}/.git" ]]; then
   git clone --depth 1 --branch "$PUPPET_CONTROL_BRANCH" \
-    "$repo" "${confdir}/environments/production"
+    "$repo" "$environment_dir"
 else
   log "Control repo already present; skipping clone"
 fi

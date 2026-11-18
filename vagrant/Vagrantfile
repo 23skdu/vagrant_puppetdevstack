@@ -12,7 +12,7 @@
 #   * Secrets are optional files in an ignored secrets/ directory. Missing
 #     secrets degrade to a warning instead of breaking `vagrant up`.
 #
-# See docs/README.md and docs/ARCHITECTURE.md for the full rationale.
+# See docs/README.md and docs/architecture.md for design details.
 
 require "ipaddr"
 require "yaml"
@@ -138,7 +138,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       unless box_checksum.empty?
         abort "box.checksum_type must be sha256 or sha512" unless %w[sha256 sha512].include?(box_checksum_type)
 
-        node.vm.box_checksum = "#{box_checksum_type}:#{box_checksum}"
+        node.vm.box_download_checksum_type = box_checksum_type
+        node.vm.box_download_checksum = box_checksum
       end
       node.vm.hostname = hostname
       node.vm.boot_timeout = boot_timeout

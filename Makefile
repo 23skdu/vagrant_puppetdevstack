@@ -1,6 +1,6 @@
 # Makefile for the Puppet development stack.
 # Run `make help` for the target list. STRICT=1 turns missing-tool skips into
-# hard failures, which is what CI should use.
+# hard failures for automated validation.
 
 SHELL := /bin/bash
 .ONESHELL:

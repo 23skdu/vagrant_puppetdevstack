@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Validate the Vagrant stack configuration without requiring Vagrant/Ruby.
 
-This mirrors the invariants enforced by vagrant/Vagrantfile so CI can fail
-fast on malformed configuration. Uses only PyYAML from requirements-dev.txt.
+This mirrors the invariants enforced by vagrant/Vagrantfile so validation can
+fail fast on malformed configuration. Uses only PyYAML from requirements-dev.txt.
 """
 
 from __future__ import annotations

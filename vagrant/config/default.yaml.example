@@ -3,10 +3,10 @@
 # Only declarative, non-secret values belong here.
 
 box:
-  # Always pin an immutable version; see docs/ARCHITECTURE.md.
+  # Always pin an immutable version; see docs/architecture.md.
   name: "debian/bookworm64"
   version: "12.20250126.1"
-  # Optional "sha256:<digest>" integrity pin.
+  # Optional integrity pin: bare hex digest (64 chars sha256 / 128 sha512).
   checksum: ""
   checksum_type: "sha256"
 

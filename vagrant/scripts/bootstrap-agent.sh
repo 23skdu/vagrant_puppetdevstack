@@ -7,6 +7,9 @@ PUPPETDEV_LIB="${PUPPETDEV_LIB:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/li
 # shellcheck disable=SC1090
 source "$PUPPETDEV_LIB"
 
+# Remove staged secrets even if provisioning fails partway through.
+trap 'rm -rf "${PUPPETDEV_SECRETS_DIR:-/tmp/puppetdev/secrets}"' EXIT
+
 require_env PUPPETDEV_HOSTNAME
 require_env PUPPETDEV_IP
 require_env PUPPET_SERVER_HOSTNAME

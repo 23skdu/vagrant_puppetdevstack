@@ -35,7 +35,7 @@ cd vagrant && vagrant up
 
 ```text
 vagrant/       the Vagrant stack: Vagrantfile, config, bootstrap scripts
-docs/          usage, architecture analysis and security guidance
+docs/          usage and architecture documentation
 scripts/       config validation, security audit and box update tooling
 .github/       Dependabot config and GitHub Actions workflows
 Makefile       validation, lint (including YAML), security and lifecycle targets
@@ -45,8 +45,8 @@ Makefile       validation, lint (including YAML), security and lifecycle targets
 
 - [Usage guide](docs/README.md) - prerequisites, configuration reference,
   secrets, Make targets and troubleshooting.
-- [Architecture and modernization decisions](docs/ARCHITECTURE.md) - deep
-  analysis of the original stack, threat model and design rationale.
+- [Architecture](docs/architecture.md) - components, configuration model,
+  topology, provisioning lifecycle and build pipeline.
 
 ## Dependency maintenance
 
@@ -54,7 +54,7 @@ Makefile       validation, lint (including YAML), security and lifecycle targets
   (`vagrant/Gemfile`) and GitHub Actions weekly.
 - A scheduled workflow checks Vagrant Cloud and opens a PR when a newer
   VirtualBox-capable box is available.
-- Every update is validated by `make STRICT=1 check` in CI.
+- Review every update with `make STRICT=1 check` before merging.
 
 ## Security
 
