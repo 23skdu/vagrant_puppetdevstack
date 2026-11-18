@@ -1,0 +1,40 @@
+---
+# Copy to default.yaml (or point PUPPETDEV_CONFIG at another path) and edit.
+# Only declarative, non-secret values belong here.
+
+box:
+  # Always pin an immutable version; see docs/ARCHITECTURE.md.
+  name: "debian/bookworm64"
+  version: "12.20250126.1"
+  # Optional "sha256:<digest>" integrity pin.
+  checksum: ""
+  checksum_type: "sha256"
+
+puppet:
+  version: "8"                       # supported: 7, 8
+  server_hostname: "puppet.example.test"
+  environment: "dev"
+  autosign: "*.example.test"         # dev convenience; never use "*"
+  control_repo:
+    https: "https://github.com/example/puppet-control.git"
+    ssh: "git@github.com:example/puppet-control.git"
+    branch: "main"
+
+network:
+  subnet: "10.0.3.0/24"              # must be IPv4 CIDR
+  internal_network: "devnetwork"
+
+nodes:
+  puppetserver:
+    hostname: "puppetserver001.example.test"
+    ip_octet: 42                     # 2..254, unique per node
+    memory_mb: 2048
+    cpus: 2
+  puppetagent:
+    hostname: "service001.example.test"
+    ip_octet: 43
+    memory_mb: 1024
+    cpus: 1
+
+gui: false
+boot_timeout: 300

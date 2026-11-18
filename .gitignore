@@ -1,0 +1,69 @@
+# ---------------------------------------------------------------------------
+# Vagrant runtime state and downloaded boxes
+# ---------------------------------------------------------------------------
+.vagrant/
+*.box
+vagrant/.generated/
+
+# ---------------------------------------------------------------------------
+# Secrets - NEVER commit these. See docs/SECURITY.md before adding anything.
+# ---------------------------------------------------------------------------
+secrets/
+vagrant/secrets/
+**/secrets/
+.env
+.env.*
+*.pem
+*.p12
+*.pfx
+*.key
+id_rsa
+id_rsa.*
+*deploykey*
+*deploy_key*
+*.pkcs7
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+pip-wheel-metadata/
+
+# ---------------------------------------------------------------------------
+# Ruby / Vagrant tooling
+# ---------------------------------------------------------------------------
+.rubocop_cache/
+.ruby-gemset
+.bundle/
+vendor/bundle/
+# Gemfile.lock is intentionally NOT ignored so Dependabot can pin updates.
+
+# ---------------------------------------------------------------------------
+# Linter / scanner artifacts
+# ---------------------------------------------------------------------------
+.yamllint-cache
+.shellcheck*
+gitleaks-report.json
+gitleaks-report.sarif
+*.sarif
+*.junit.xml
+# .gitleaksignore is deliberately committed: it documents the one triaged
+# historical finding while gitleaks continues to scan all future history.
+
+# ---------------------------------------------------------------------------
+# Editor, OS and logs
+# ---------------------------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.log

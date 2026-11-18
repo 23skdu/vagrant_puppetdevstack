@@ -1,0 +1,5 @@
+# Python tooling for `make validate`, `make lint` and `make security`.
+# Ranges are deliberately bounded; Dependabot (pip ecosystem) keeps them fresh.
+PyYAML>=6.0,<7
+yamllint>=1.35,<2
+pip-audit>=2.7,<3
