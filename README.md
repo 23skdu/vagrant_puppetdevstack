@@ -4,12 +4,6 @@ A reproducible, DevSecOps-oriented Vagrant setup for developing Puppet control
 repos. It boots two Debian 12 VMs on an isolated internal network: a Puppet
 Server and a Puppet agent.
 
-The stack was rewritten from an inherited root-level Vagrantfile that used an
-end-of-life box, unsafe YAML loading, a hardcoded SSH password, blind SSH host
-trust, and referenced secrets that had already been removed from git history.
-Everything now lives under [`vagrant/`](vagrant/) with validated configuration,
-pinned dependencies, lint/security gates and automated dependency updates.
-
 ## Quick start
 
 ```bash
