@@ -1,50 +1,11 @@
----
-# Dependabot keeps Ruby/Vagrant tooling, Python tooling and Actions current.
-# Vagrant Cloud boxes are not a supported ecosystem, so box-update.yml handles
-# that pinned dependency separately.
 version: 2
 updates:
-  - package-ecosystem: "bundler"
-    directory: "/vagrant"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "vagrant"
-    commit-message:
-      prefix: "deps(vagrant)"
-    open-pull-requests-limit: 5
-    groups:
-      ruby-tooling:
-        patterns:
-          - "*"
-
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
-    labels:
-      - "dependencies"
-      - "python"
-    commit-message:
-      prefix: "deps(python)"
-    open-pull-requests-limit: 5
-    groups:
-      python-tooling:
-        patterns:
-          - "*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-    labels:
-      - "dependencies"
-      - "ci"
-    commit-message:
-      prefix: "deps(ci)"
-    open-pull-requests-limit: 5
-    groups:
-      actions:
-        patterns:
-          - "*"
