@@ -55,3 +55,7 @@ Makefile       validation, lint (including YAML), security and lifecycle targets
 No private keys are stored in this repository. Secrets are optional files under
 `vagrant/secrets/` (ignored by git), and `make security` scans the worktree and
 history for anything sensitive. See [docs/README.md](docs/README.md#secrets).
+
+## License
+
+This project is released into the public domain under the [Unlicense](https://unlicense.org). See [LICENSE](LICENSE) for details.
